@@ -30,3 +30,5 @@ python translate.py -model model_snapshots/IMGD_ADAM_step_10000.pt -src Data/src
 #Detokenize:
 sed -i "s/@@ //g"  Data/pred.txt
 
+#Evaluation:
+perl  tools/multi-bleu.perl Data/testTarget.txt < Data/pred.txt
