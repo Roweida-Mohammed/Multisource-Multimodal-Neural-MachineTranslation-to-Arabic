@@ -1,8 +1,8 @@
-!git clone https://github.com/OpenNMT/OpenNMT-py
-!pip install OpenNMT-py
+git clone https://github.com/OpenNMT/OpenNMT-py
+pip install OpenNMT-py
 cd OpenNMT-py
-!pip install -r requirements.opt.txt
-!python setup.py install
+pip install -r requirements.opt.txt
+python setup.py install
 
 #BPE:
 python tools/learn_bpe.py -i Data/train.txt -o Data/src.code -s 40000
@@ -14,9 +14,14 @@ python tools/apply_bpe.py -c Data/tgt.code -i Data/trainTarget.txt -o Data/tgt-t
 python tools/apply_bpe.py -c Data/tgt.code -i Data/valTarget.txt -o Data/tgt-val-bpe.txt
 
 #Preprocess the data:
-!python preprocess.py -train_src Data/src-train-bpe.txt -train_tgt Data/tgt-train-bpe.txt -valid_src Data/src-val-bpe.txt -valid_tgt Data/tgt-val-bpe.txt -save_data Data/demo
+python preprocess.py -train_src Data/src-train-bpe.txt -train_tgt Data/tgt-train-bpe.txt -valid_src Data/src-val-bpe.txt -valid_tgt Data/tgt-val-bpe.txt -save_data Data/demo
 
 #Apply word embeddings:
 tools/embeddings_to_torch.py -emb_file_both "Data/glove.txt" -dict_file "Data/m30k.vocab.pt" -output_file "Data/embeddingsNew"
 tools/embeddings_to_torch.py -emb_file_both "Data/bert.txt" -dict_file "Data/m30k.vocab.pt" -output_file "Data/embeddingsNew"
 
+#Train models:
+python train.py -data Data/demo -save_model model_snapshots/IMGD_ADAM -gpu_ranks 0 -pre_word_vecs_enc "Data/embeddingsNew.enc.pt" -pre_word_vecs_dec "Data/embeddingsNew.dec.pt" -encoder_type brnn -decoder_type rnn
+
+#Translate:
+#Now that you have your model, you can start translating.
