@@ -1,3 +1,44 @@
+********************************************************************************************************
+#Clean data in Google Colab:
+import nltk, re, pprint
+import nltk
+nltk.download('punkt')
+import string
+from nltk import word_tokenize
+from nltk.corpus import stopwords
+nltk.download('stopwords')
+from nltk.tokenize import RegexpTokenizer
+import pickle
+from collections import Counter
+from nltk.tokenize.treebank import TreebankWordDetokenizer
+nltk.download('perluniprops')
+from nltk.tokenize.moses import MosesDetokenizer
+
+mkdir data
+with open('tgt-test.txt', 'r') as E:
+    data = E.read()
+    print(data)
+
+from string import punctuation
+data= ''.join(c for c in data if c not in punctuation)
+print(data)
+
+word=data.lower()
+word
+E=word_tokenize(data)
+print(E[:200])
+
+words = [w.lower() for w in data]
+print(words[:100])
+
+tokenizer = RegexpTokenizer(r'\w+')
+
+result = tokenizer.tokenize(data)
+#words = [w.lower() for w in result]
+
+print(result[:100])
+*******************************************************************************************************************************
+#Install OpenNMT in Anaconda Prompt (Anaconda3):
 git clone https://github.com/OpenNMT/OpenNMT-py
 pip install OpenNMT-py
 cd OpenNMT-py
