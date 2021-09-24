@@ -25,7 +25,7 @@ python train.py -data Data/demo -save_model model_snapshots/IMGD_ADAM -gpu_ranks
 
 #Translate:
 #Now that you have your model, you can start translating.
-python translate.py -model model_snapshots/IMGD_ADAM_step_10000.pt -src Data/src-test-bpe.txt -output pred.txt -replace_unk -verbose
+python translate.py -model model_snapshots/IMGD_ADAM_step_10000.pt -src Data/src-test-bpe.txt -output Data/pred.txt -replace_unk -verbose
 
 #Detokenize:
 sed -i "s/@@ //g"  Data/pred.txt
