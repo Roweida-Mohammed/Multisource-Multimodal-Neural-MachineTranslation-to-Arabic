@@ -1,1 +1,71 @@
+**********************************************************************************************
+Clean data in Google Colab:
+import nltk, re, pprint
+import nltk
+nltk.download('punkt')
+import string
+from nltk import word_tokenize
+from nltk.corpus import stopwords
+nltk.download('stopwords')
+from nltk.tokenize import RegexpTokenizer
+import pickle
+from collections import Counter
+from nltk.tokenize.treebank import TreebankWordDetokenizer
+nltk.download('perluniprops')
+from nltk.tokenize.moses import MosesDetokenizer
 
+mkdir data
+with open('tgt-test.txt', 'r') as E:
+    data = E.read()
+    print(data)
+
+from string import punctuation
+data= ''.join(c for c in data if c not in punctuation)
+print(data)
+
+word=data.lower()
+word
+E=word_tokenize(data)
+print(E[:200])
+
+words = [w.lower() for w in data]
+print(words[:100])
+
+tokenizer = RegexpTokenizer(r'\w+')
+
+result = tokenizer.tokenize(data)
+#words = [w.lower() for w in result]
+
+print(result[:100])
+*********************************************************************************************
+#Extract image features:
+python extract_image_features.py ---gpuid 0 --pretrained_cnn vgg19_bn --splits=train,valid,test --images_path /path/to/flickr30k/images/ --train_fnames /path/to/flickr30k/train_images.txt --valid_fnames /path/to/flickr30k/val_images.txt --test_fnames /path/to/flickr30k/test2016_images.txt
+python extract_image_features.py ---gpuid 0 --pretrained_cnn resnet50 --splits=train,valid,test --images_path /content/drive/'My Drive'/images/images/ --train_fnames trainNum.txt --valid_fnames valNum.txt --test_fnames testNum.txt
+
+#BPE:
+python tools/learn_bpe.py -i Data/train.txt -o Data/src.code -s 40000
+python tools/learn_bpe.py -i Data/trainTarget.txt -o Data/tgt.code -s 40000
+python tools/apply_bpe.py -c Data/src.code -i Data/train.txt -o Data/src-train-bpe.txt
+python tools/apply_bpe.py -c Data/src.code -i Data/val.txt -o Data/src-val-bpe.txt
+python tools/apply_bpe.py -c Data/src.code -i Data/test.txt -o Data/src-test-bpe.txt
+python tools/apply_bpe.py -c Data/tgt.code -i Data/trainTarget.txt -o Data/tgt-train-bpe.txt
+python tools/apply_bpe.py -c Data/tgt.code -i Data/valTarget.txt -o Data/tgt-val-bpe.txt
+
+#Preprocess the data:
+onmt_preprocess -train_src Data/src-train-bpe.txt -train_tgt Data/tgt-train-bpe.txt -valid_src Data/src-val-bpe.txt -valid_tgt Data/tgt-val-bpe.txt -save_data Data/demo
+
+#Apply word embeddings:
+tools/embeddings_to_torch.py -emb_file "Data/glove.txt" -dict_file "Data/m30k.vocab.pt" -output_file "Data/embeddingsNew"
+tools/embeddings_to_torch.py -emb_file "Data/bert.txt" -dict_file "Data/m30k.vocab.pt" -output_file "Data/embeddingsNew"
+
+#Train models:
+python train_mm.py -data Data/demo -save_model model_snapshots/IMGD_ADAM -gpuid 0 -pre_word_vecs_enc "Data/embeddings.enc.pt" -pre_word_vecs_dec "Data/embeddings.dec.pt" -epochs 30 -batch_size 25 -path_to_train_img_feats flickr30k_train_vgg19_cnn_features.hdf5 -path_to_valid_img_feats flickr30k_valid_vgg19_cnn_features.hdf5 -optim adam -learning_rate 0.002 -use_nonlinear_projection --multimodal_model_type imge
+
+#Translate:
+python translate_mm.py -src Data/src-test-bpe.txt -model model_snapshots/IMGD_ADAM_acc_0.00_ppl_148.41_e28.pt -path_to_test_img_feats flickr30k_test_resnet50_cnn_features.hdf5 -output Data/pred2.txt -verbose
+
+#Detokenize:
+sed -i "s/@@ //g"  Data/pred.txt
+
+#Evaluation:
+perl  tools/multi-bleu.perl Data/testTarget.txt < Data/pred.txt
